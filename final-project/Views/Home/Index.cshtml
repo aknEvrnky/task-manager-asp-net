@@ -7,27 +7,257 @@
     <div id='calendar'></div>
 </div>
 
-<script>
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalTitle"></h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="" id="eventForm" data-event-id>
+                    <div class="mb-3">
+                        <label for="eventCustomer" class="col-form-label">Customer</label>
+                        <select type="text" class="form-control" name="customer_id" id="eventCustomer" required>
+                            <option value="">Select a customer</option>
+                            @foreach (var customer in (IEnumerable<Customer>)ViewData["customers"])
+                            {
+                                <option value="@customer.id">@customer.name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventTitle" class="col-form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="eventTitle">
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventContent" class="col-form-label">Content</label>
+                        <textarea class="form-control" name="content" id="eventContent"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="started_at" class="form-label">From</label>
+                        <div class="input-group log-event" id="started_at_linked" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="started_at" name="started_at" type="text" class="form-control" data-td-target="#started_at"/>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="finished_at" class="form-label">To</label>
+                        <div class="input-group log-event" id="finished_at_linked" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="finished_at" type="text" name="finished_at" class="form-control" data-td-target="#finished_at"/>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <button id="saveButton" type="button" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // start -- prepare datetime pickers
+        const config = {
+            localization: {
+                format: 'dd/MM/yyyy H:mm',
+                startOfTheWeek: '1',
+                hourCycle: 'h24',
+            },
+        };
+        var fromTempus = new tempusDominus.TempusDominus(document.getElementById("started_at"), config);
+        var toTempus = new tempusDominus.TempusDominus(document.getElementById("finished_at"), config);
+        const fromTempusElement = document.getElementById("started_at");
+
+        //using event listeners
+        fromTempusElement.addEventListener(tempusDominus.Namespace.events.change, (e) => {
+            toTempus.updateOptions({
+                restrictions: {
+                    minDate: e.detail.date,
+                },
+            });
+        });
+
+        //using subscribe method
+        const subscription = toTempus.subscribe(tempusDominus.Namespace.events.change, (e) => {
+            fromTempus.updateOptions({
+                restrictions: {
+                    maxDate: e.date,
+                },
+            });
+        });
+        // end -- prepare datetime pickers
+
+        // start -- prepare FullCalendar
+        const eventForm = new bootstrap.Modal('#eventModal');
+
+        const updateEventFormState = function(event) {
+            $('#eventForm').attr("data-type", 'update');
+            $('#eventForm').attr("data-event-id", event.id);
+            $('#modalTitle').text(`Update ${event.title} event`);
+            $('#eventTitle').val(event.title);
+            $('#eventContent').val(event.extendedProps.description);
+            $('#eventCustomer').val(event.extendedProps.customer_id);
+
+            fromTempus.dates.setValue(tempusDominus.DateTime.convert(event.start));
+            toTempus.dates.setValue(tempusDominus.DateTime.convert(event.end));
+
+        };
+        const createEventFormState = function() {
+            $('#eventForm').attr("data-type", 'create');
+            $('#eventForm').attr("data-event-id", "");
+            $('#modalTitle').text(`Create a new Task`);
+            $('#eventTitle').val("");
+            $('#eventContent').val("");
+            
+            $('#eventCustomer').prop('selectedIndex', 0);
+            fromTempus.dates.setValue(tempusDominus.DateTime.convert(new Date()));
+            toTempus.dates.setValue(tempusDominus.DateTime.convert(new Date()));
+            eventForm.show();
+        };
+
         var calendarEl = document.getElementById('calendar');
-        
+
         var calendar = new FullCalendar.Calendar(calendarEl, {
             timeZone: 'UTC',
             initialView: 'dayGridMonth',
             themeSystem: 'bootstrap5',
             firstDay: 1,
             showNonCurrentDates: true,
+            selectable: true,
+            editable: true,
+            customButtons: {
+                createTaskButton: {
+                    text: 'create a task',
+                    click: createEventFormState,
+                }
+            },
+            headerToolbar: {
+                left: 'prev,next today createTaskButton',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
             events: {
                 url: '/api/tasks/',
+                durationEditable: true,
             },
-            eventDidMount: function(info) {
-                console.log(info.event.extendedProps);
+            eventClick: function (eventInfo) {
+                updateEventFormState(eventInfo.event);
+                setTimeout(() => eventForm.show(), 200);
+            },
+            select: function(info) {
+                createEventFormState();
+                let startDate = tempusDominus.DateTime.convert(info.start);
+                fromTempus.dates.setValue(startDate);
                 
-                // {description: "Lecture", department: "BioChemistry"}
+                let endDate = tempusDominus.DateTime.convert(info.end);
+                endDate = endDate.manipulate(-1, 'date');
+                toTempus.dates.setValue(endDate);
             },
-            editable: true,
+            eventDrop: function(info) {
+                makeUpdateFormDatePost(info.event.id, info.event.start, info.event.end);
+            },
         });
-        
+
         calendar.render();
+
+        const makeUpdateFormPost = function () {
+            const id = $('#eventForm').attr("data-event-id");
+            $.ajax({
+                url: `/api/tasks/${id}`,
+                type: 'PUT',
+                data: {
+                    customer_id: $('#eventCustomer').val(),
+                    title: $('#eventTitle').val(),
+                    content: $('#eventContent').val(),
+                    started_at: $('#started_at').val(),
+                    finished_at: $('#finished_at').val(),
+                },
+                success: function (result) {
+                    Toastify({
+                        text: "Task updated successfully!",
+                        duration: 3000
+                    }).showToast();
+                },
+                error: function (error) {
+                    Toastify({
+                        text: "Task update failed!",
+                        duration: 3000
+                    }).showToast();
+                }
+            });
+        };
+
+        const makeUpdateFormDatePost = function (eventId, startDate, endDate) {
+            $.ajax({
+                url: `/api/tasks/${eventId}/dates`,
+                type: 'PATCH',
+                data: {
+                    started_at: startDate.toISOString(),
+                    finished_at: endDate.toISOString(),
+                },
+                success: function (result) {
+                    Toastify({
+                        text: "Task date updated successfully!",
+                        duration: 3000
+                    }).showToast();
+                },
+                error: function (error) {
+                    Toastify({
+                        text: "Task date update failed!",
+                        duration: 3000
+                    }).showToast();
+                }
+            });
+        };
+
+        const makeCreateFormPost = function () {
+            $.ajax({
+                url: `/api/tasks`,
+                type: 'POST',
+                data: {
+                    title: $('#eventTitle').val(),
+                    content: $('#eventContent').val(),
+                    started_at: $('#started_at').val(),
+                    finished_at: $('#finished_at').val(),
+                },
+                success: function (result) {
+                    Toastify({
+                        text: "Task created successfully!",
+                        duration: 3000
+                    }).showToast();
+                },
+                error: function (error) {
+                    Toastify({
+                        text: "Task creation failed!",
+                        duration: 3000
+                    }).showToast();
+                }
+            });
+        };
+
+        $('#saveButton').click(function () {
+            let type = $('#eventForm').attr('data-type');
+
+            if (type === 'update') {
+                makeUpdateFormPost();
+            } else if (type === 'create') {
+                makeCreateFormPost();
+            }
+            
+            eventForm.hide();
+            // wait 200 ms for the server to update the data
+            setTimeout(() => calendar.refetchEvents(), 200);
+        });
+
+        
     });
-</script>
+
+    
+    </script>
+}

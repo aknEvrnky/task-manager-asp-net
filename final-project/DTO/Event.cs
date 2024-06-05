@@ -11,7 +11,8 @@ public class Event
     public DateTime end { get; set; }
     
     public string backgroundColor { get; set; } = "#378006";
-    public string display { get; set; } = "block";
+    
+    public int customer_id { get; set; }
 
     public static Event From(Task task)
     {
@@ -21,7 +22,8 @@ public class Event
             title = task.title,
             description = task.content,
             start = task.started_at,
-            end = task.finished_at
+            end = task.finished_at,
+            customer_id = task.customer_id
         };
     }
 }

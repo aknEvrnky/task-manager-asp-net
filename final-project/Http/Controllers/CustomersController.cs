@@ -2,7 +2,7 @@ using final_project.Models;
 using final_project.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
-namespace final_project.Controllers;
+namespace final_project.Http.Controllers;
 
 public class CustomersController : Controller
 {
