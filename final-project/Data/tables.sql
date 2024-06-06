@@ -18,8 +18,8 @@ CREATE TABLE users (
 
 CREATE TABLE tasks (
                        id INT PRIMARY KEY IDENTITY,
-                       customer_id INT FOREIGN KEY REFERENCES customers(id),
-                       user_id INT FOREIGN KEY REFERENCES users(id),
+                       customer_id INT FOREIGN KEY REFERENCES customers(id) ON DELETE CASCADE,
+                       user_id INT FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE,
                        title VARCHAR(100) NOT NULL,
                        content TEXT,
                        status VARCHAR(50),
