@@ -45,8 +45,8 @@ public class TaskRepository: ITaskRepository
 
     public Task Create(Task task)
     {
-        var query = "INSERT INTO tasks (customer_id, user_id, title, content, status, priority, started_at, finished_at) " +
-                    "VALUES (@customer_id, @user_id, @title, @content, @status, @priority, @started_at, @finished_at)";
+        var query = "INSERT INTO tasks (customer_id, user_id, title, content, status, started_at, finished_at) " +
+                    "VALUES (@customer_id, @user_id, @title, @content, @status, @started_at, @finished_at); SELECT CAST(SCOPE_IDENTITY() as int)";
         
         using (var connection = _context.CreateConnection())
         {
@@ -59,7 +59,7 @@ public class TaskRepository: ITaskRepository
     public void Update(Task task)
     {
         var query = "UPDATE tasks SET customer_id = @customer_id, user_id = @user_id, title = @title, content = @content, " +
-                    "status = @status, priority = @priority, started_at = @started_at, finished_at = @finished_at WHERE id = @id; SELECT CAST(SCOPE_IDENTITY() as int)";
+                    "status = @status, started_at = @started_at, finished_at = @finished_at WHERE id = @id";
 
         using (var connection = _context.CreateConnection())
         {

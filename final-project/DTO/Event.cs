@@ -1,4 +1,5 @@
 using Task = final_project.Models.Task;
+using TaskStatus = final_project.Enums.TaskStatus;
 
 namespace final_project.DTO;
 
@@ -13,6 +14,7 @@ public class Event
     public string backgroundColor { get; set; } = "#378006";
     
     public int customer_id { get; set; }
+    public TaskStatus task_status { get; set; }
 
     public static Event From(Task task)
     {
@@ -23,7 +25,8 @@ public class Event
             description = task.content,
             start = task.started_at,
             end = task.finished_at,
-            customer_id = task.customer_id
+            customer_id = task.customer_id,
+            task_status = task.status
         };
     }
 }

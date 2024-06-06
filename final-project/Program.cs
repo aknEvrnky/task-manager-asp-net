@@ -56,13 +56,9 @@ app.Map("/api/tasks", taskApp =>
 });
 
 // Register middleware for CustomersController
-app.Map("/Customers", customersApp =>
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/Customers"), customersApp =>
 {
     customersApp.UseMiddleware<RedirectUnauthenticatedUserMiddleware>();
-    customersApp.UseEndpoints(endpoints =>
-    {
-        endpoints.MapControllers();
-    });
 });
 
 app.MapControllerRoute(

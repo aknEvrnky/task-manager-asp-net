@@ -73,8 +73,6 @@ ViewData["Title"] = "Customers";
         </td>
         <td>
             <div class="d-flex align-items-center gap-2">
-                <a href="@Url.Action("Edit", new { id = item.id })">Edit</a>
-                <a href="@Url.Action("Details", new { id = item.id })">Details</a>
                 <form action="@Url.Action("Delete", new { id = item.id })" method="POST">
                     @Html.AntiForgeryToken()
                     <button class="btn btn-danger btn-sm" type="submit">Delete</button>

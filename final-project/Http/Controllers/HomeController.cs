@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using final_project.Models;
 using final_project.Repositories;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using TaskStatus = final_project.Enums.TaskStatus;
 
 namespace final_project.Http.Controllers;
 
@@ -22,6 +22,8 @@ public class HomeController : Controller
     {
         var customers = _repository.All();
         ViewData["customers"] = customers;
+        ViewBag.StatusOptions = GetStatusOptions();
+        
         return View();
     }
 
@@ -34,5 +36,19 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+    
+    private List<SelectListItem> GetStatusOptions()
+    {
+        var statusOptions = Enum.GetValues(typeof(TaskStatus))
+            .Cast<TaskStatus>()
+            .Select(status => new SelectListItem
+            {
+                Value = status.GetHashCode().ToString(),
+                Text = status.ToString()
+            })
+            .ToList();
+
+        return statusOptions;
     }
 }

@@ -2,8 +2,10 @@ using final_project.DTO;
 using final_project.Http.Requests;
 using final_project.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Task = final_project.Models.Task;
-
+using TaskStatus = final_project.Enums.TaskStatus;
+using System;
 namespace final_project.Http.Controllers;
 
 /*
@@ -43,20 +45,34 @@ public class TasksController: Controller
     }
     
     [HttpPost]
-    public IActionResult Create([FromForm] Task task)
+    public IActionResult Create([FromForm] CreateTaskRequest request)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            _repository.Create(task);
-            return Ok(task);
+            ModelState.AddModelError("", "Invalid email or password");
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            ViewBag.Errors = errors;
+            
+            return BadRequest(request);
         }
 
-        return BadRequest();
+        var task = new Task
+        {
+            title = request.title,
+            content = request.content,
+            started_at = request.started_at,
+            finished_at = request.finished_at,
+            customer_id = request.customer_id,
+            status = request.status
+        };
+        
+        _repository.Create(task);
 
+        return Ok(request);
     }
 
     [HttpPut("{id}")]
-    public IActionResult Edit(int id, [FromForm] Task task)
+    public IActionResult Edit(int id, [FromForm] UpdateTaskRequest request)
     {
         var existingTask = _repository.Find(id);
         if (existingTask == null)
@@ -64,20 +80,24 @@ public class TasksController: Controller
             return NotFound("Task not found");
         }
         
-        existingTask.title = task.title;
-        existingTask.content = task.content;
-        existingTask.started_at = task.started_at;
-        existingTask.finished_at = task.finished_at;
-        existingTask.customer_id = task.customer_id;
-
         if (ModelState.IsValid)
         {
+            existingTask.title = request.title;
+            existingTask.content = request.content;
+            existingTask.started_at = request.started_at;
+            existingTask.finished_at = request.finished_at;
+            existingTask.customer_id = request.customer_id;
+            existingTask.status = request.status;
+            
             _repository.Update(existingTask);
 
             return Ok();
         }
 
-        return NoContent();
+        ModelState.AddModelError("", "Invalid email or password");
+        var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+        ViewBag.Errors = errors;
+        return BadRequest();
     }
     
     // create a patch route to update task's started_at and finished_at
@@ -103,5 +123,4 @@ public class TasksController: Controller
 
         return NoContent();
     }
-    
 }

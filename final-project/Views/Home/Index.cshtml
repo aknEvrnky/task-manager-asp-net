@@ -47,6 +47,16 @@
                         </div>
                     </div>
                     <div class="mb-3">
+                        <label for="finished_at" class="form-label">Status</label>
+                        <select class="form-control" id="taskStatus">
+                            <option value="">Select Status</option>
+                            @foreach (var statusOption in (IEnumerable<SelectListItem>)ViewBag.StatusOptions)
+                            {
+                                <option value="@statusOption.Value">@statusOption.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <button id="saveButton" type="button" class="btn btn-primary">Save changes</button>
                     </div>
                 </form>
@@ -103,6 +113,7 @@
             $('#eventTitle').val(event.title);
             $('#eventContent').val(event.extendedProps.description);
             $('#eventCustomer').val(event.extendedProps.customer_id);
+            $('#taskStatus').val(event.extendedProps.task_status);
 
             fromTempus.dates.setValue(tempusDominus.DateTime.convert(event.start));
             toTempus.dates.setValue(tempusDominus.DateTime.convert(event.end));
@@ -116,6 +127,7 @@
             $('#eventContent').val("");
             
             $('#eventCustomer').prop('selectedIndex', 0);
+            $('#taskStatus').prop('selectedIndex', 0);
             fromTempus.dates.setValue(tempusDominus.DateTime.convert(new Date()));
             toTempus.dates.setValue(tempusDominus.DateTime.convert(new Date()));
             eventForm.show();
@@ -177,6 +189,7 @@
                     content: $('#eventContent').val(),
                     started_at: $('#started_at').val(),
                     finished_at: $('#finished_at').val(),
+                    status: $('#taskStatus').val(),
                 },
                 success: function (result) {
                     Toastify({
@@ -225,6 +238,7 @@
                     content: $('#eventContent').val(),
                     started_at: $('#started_at').val(),
                     finished_at: $('#finished_at').val(),
+                    customer_id: $('#eventCustomer').val(),
                 },
                 success: function (result) {
                     Toastify({
