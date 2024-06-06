@@ -4,7 +4,7 @@ public interface IBaseRepository<T>
 {
     List<T> All();
     T? Find(int id);
-    void Create(T model);
+    T Create(T model);
     void Update(T model);
     void Delete(int id);
 }

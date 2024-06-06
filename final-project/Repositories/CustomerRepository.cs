@@ -35,13 +35,14 @@ public class CustomerRepository: ICustomerRepository
         }
     }
 
-    public void Create(Customer customer)
+    public Customer Create(Customer customer)
     {
-        var query = "INSERT INTO customers (name, email, phone) " +
-                    "VALUES (@name, @email, @phone)";
+        var query = "INSERT INTO customers (name, email, phone) VALUES (@name, @email, @phone); SELECT CAST(SCOPE_IDENTITY() as int)";
         using (var connection = _context.CreateConnection())
         {
-            connection.Execute(query, customer);
+            var id = connection.QuerySingle<int>(query, customer);
+            customer.id = id;
+            return customer;
         }
     }
 

@@ -32,6 +32,7 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Customers" asp-action="Index">Customers</a>
                     </li>
+                    @await Component.InvokeAsync("AuthenticatedUser")
                 </ul>
             </div>
         </div>
@@ -56,5 +57,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@@eonasdan/tempus-dominus@6.9.4/dist/js/tempus-dominus.min.js" crossorigin="anonymous"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
+@Html.Partial("_ValidationMessages", ViewBag.Errors as IEnumerable<string> ?? new List<string>())
 </body>
 </html>

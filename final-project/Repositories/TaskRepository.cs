@@ -43,21 +43,23 @@ public class TaskRepository: ITaskRepository
         }
     }
 
-    public void Create(Task task)
+    public Task Create(Task task)
     {
         var query = "INSERT INTO tasks (customer_id, user_id, title, content, status, priority, started_at, finished_at) " +
                     "VALUES (@customer_id, @user_id, @title, @content, @status, @priority, @started_at, @finished_at)";
         
         using (var connection = _context.CreateConnection())
         {
-            connection.Execute(query, task);
+            var id = connection.QuerySingle<int>(query, task);
+            task.id = id;
+            return task;
         }
     }
 
     public void Update(Task task)
     {
         var query = "UPDATE tasks SET customer_id = @customer_id, user_id = @user_id, title = @title, content = @content, " +
-                    "status = @status, priority = @priority, started_at = @started_at, finished_at = @finished_at WHERE id = @id";
+                    "status = @status, priority = @priority, started_at = @started_at, finished_at = @finished_at WHERE id = @id; SELECT CAST(SCOPE_IDENTITY() as int)";
 
         using (var connection = _context.CreateConnection())
         {
