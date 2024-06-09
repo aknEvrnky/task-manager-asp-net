@@ -49,8 +49,8 @@ public class CustomerRepository: ICustomerRepository
     public void Update(Customer customer)
     {
         var query = "UPDATE customers SET FirstName = @FirstName, LastName = @LastName, Email = @Email, Phone = @Phone, " +
-                    "Address = @Address, City = @City, State = @State, ZipCode = @ZipCode, Country = @Country " +
-                    "WHERE Id = @Id";
+                    "Address = @Address, City = @City, State = @State, ZipCode = @ZipCode, Country = @Country, " +
+                    "updated_at = GETDATE() WHERE Id = @Id";
         using (var connection = _context.CreateConnection())
         {
              connection.Execute(query, customer);

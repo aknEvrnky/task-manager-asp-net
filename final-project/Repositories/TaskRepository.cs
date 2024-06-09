@@ -59,7 +59,7 @@ public class TaskRepository: ITaskRepository
     public void Update(Task task)
     {
         var query = "UPDATE tasks SET customer_id = @customer_id, user_id = @user_id, title = @title, content = @content, " +
-                    "status = @status, started_at = @started_at, finished_at = @finished_at WHERE id = @id";
+                    "status = @status, started_at = @started_at, finished_at = @finished_at, updated_at = GETDATE() WHERE id = @id";
 
         using (var connection = _context.CreateConnection())
         {

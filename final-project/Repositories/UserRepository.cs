@@ -47,7 +47,7 @@ public class UserRepository: IUserRepository
 
     public void Update(User model)
     {
-        var query = "UPDATE users SET name = @name, email = @email, password = @password WHERE id = @id";
+        var query = "UPDATE users SET name = @name, email = @email, password = @password, updated_at = GETDATE() WHERE id = @id";
         
         using (var connection = _context.CreateConnection())
         {
