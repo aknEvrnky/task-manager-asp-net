@@ -23,13 +23,24 @@ public class TaskRepository: ITaskRepository
             return connection.Query<Task>(query).AsList();
         }
     }
-    public List<Task> GetTasksByDateRange(DateTime start, DateTime end)
+
+    public List<Task> AllByUser(int userId)
     {
-        var query = "SELECT * FROM tasks WHERE started_at >= @start AND finished_at <= @end";
+        var query = "SELECT * FROM tasks where user_id = @userId";
         
         using (var connection = _context.CreateConnection())
         {
-            return connection.Query<Task>(query, new {start, end}).AsList();
+            return connection.Query<Task>(query, new {userId}).AsList();
+        }
+    }
+
+    public List<Task> GetTasksByDateRange(int userId, DateTime start, DateTime end)
+    {
+        var query = "SELECT * FROM tasks WHERE user_id = @userId AND started_at >= @start AND finished_at <= @end";
+        
+        using (var connection = _context.CreateConnection())
+        {
+            return connection.Query<Task>(query, new {userId, start, end}).AsList();
         }
     }
 

@@ -2,10 +2,10 @@ using final_project.DTO;
 using final_project.Http.Requests;
 using final_project.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Task = final_project.Models.Task;
-using TaskStatus = final_project.Enums.TaskStatus;
-using System;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+
 namespace final_project.Http.Controllers;
 
 /*
@@ -29,6 +29,7 @@ public class TasksController: Controller
         _repository = repository;
     }
     
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Event>>> GetAllTasks([FromQuery] DateTime start, [FromQuery] DateTime end)
     {
@@ -37,13 +38,20 @@ public class TasksController: Controller
         {
             return BadRequest("Start and end dates are required.");
         }
+
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId) || userId == 0)
+        {
+            return Unauthorized();
+        }
+        
         // Fetch tasks based on the provided start and end dates
-        var tasks = _repository.GetTasksByDateRange(start, end);
+        var tasks = _repository.GetTasksByDateRange(userId, start, end);
         
         var events = tasks.Select(Event.From);
         return Ok(events);
     }
     
+    [Authorize]
     [HttpPost]
     public IActionResult Create([FromForm] CreateTaskRequest request)
     {
@@ -55,6 +63,11 @@ public class TasksController: Controller
             
             return BadRequest(request);
         }
+        
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId) || userId == 0)
+        {
+            return Unauthorized();
+        }
 
         var task = new Task
         {
@@ -63,7 +76,8 @@ public class TasksController: Controller
             started_at = request.started_at,
             finished_at = request.finished_at,
             customer_id = request.customer_id,
-            status = request.status
+            status = request.status,
+            user_id = userId
         };
         
         _repository.Create(task);
@@ -71,6 +85,7 @@ public class TasksController: Controller
         return Ok(request);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public IActionResult Edit(int id, [FromForm] UpdateTaskRequest request)
     {
@@ -78,6 +93,18 @@ public class TasksController: Controller
         if (existingTask == null)
         {
             return NotFound("Task not found");
+        }
+
+        // authenticate
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId) || userId == 0)
+        {
+            return Unauthorized();
+        }
+
+        // authorize
+        if (existingTask.user_id != userId)
+        {
+            return Forbid();
         }
         
         if (ModelState.IsValid)
@@ -102,6 +129,7 @@ public class TasksController: Controller
     
     // create a patch route to update task's started_at and finished_at
     // only started_at and finished_at will be passed in the request body
+    [Authorize]
     [HttpPatch("{id}/dates")]
     public IActionResult UpdateDates(int id, [FromForm] TaskUpdateDateRequest taskUpdateDates)
     {
@@ -109,6 +137,18 @@ public class TasksController: Controller
         if (existingTask == null)
         {
             return NotFound("Task not found");
+        }
+        
+        // authenticate
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId) || userId == 0)
+        {
+            return Unauthorized();
+        }
+
+        // authorize
+        if (existingTask.user_id != userId)
+        {
+            return Forbid();
         }
         
         existingTask.started_at = taskUpdateDates.started_at ?? existingTask.started_at;
